@@ -1,0 +1,10 @@
+{
+  "name": "UrlShortener",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "James Shields",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.16.3"
+  }
+}
