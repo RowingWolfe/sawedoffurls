@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
-
+require('dotenv').config();
 //Todo:
 // - Add mongodb backend
 // - Validate URLs
