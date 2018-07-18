@@ -50,7 +50,7 @@ app.get('/:slug', (req, res, next) => {
     //Check slug against DB, redirect to URL from the slug.
     ShortUrl.find({_id:req.params.slug}, (err, urls) => {
         if(err){console.log(err)};
-        forward = urls[0].url;
+        let forward = urls[0].url;
         res.send(`<meta http-equiv="refresh" content="0; url=${forward}/" /> <h1>Redirecting...</h1>`)
     });
     
