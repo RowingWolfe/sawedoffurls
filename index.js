@@ -1,49 +1,61 @@
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+const validUrl = require('valid-url');
 require('dotenv').config();
-//Todo:
-// - Add mongodb backend
-// - Validate URLs
 
+//Config
 const PORT = 3000;
+const siteUrl = 'derpdeedoo.com';
+
+//Database Connection
+mongoose.Promise = global.Promise;
+mongoose.connect(process.env.MONGO_URI);
+
+//Schemas
+const urlSchema = mongoose.Schema({
+    url: String
+});
+let ShortUrl = mongoose.model('ShortUrl', urlSchema);
+
+
 //Middleware
 app.use(express.static('public'));
 const urlParser = bodyParser.urlencoded({ extended: false });
 
-//Validation
-const pattern = ('^(https?:\/\/)?'+ // protocol
-    '((([a-z\d]([a-z\d-]*[a-z\d])*)\.)+[a-z]{2,}|'+ // domain name
-    '((\d{1,3}\.){3}\d{1,3}))'+ // OR ip (v4) address
-    '(\:\d+)?(\/[-a-z\d%_.~+]*)*'+ // port and path
-    '(\?[;&a-z\d%_.~+=-]*)?'+ // query string
-    '(\#[-a-z\d_]*)?$','i'); // fragment locater
-    //if(!pattern.test(str)) 
-
-//Object for holding slugs til DB is added.
-slugs = [
-    {
-        slug: 0,
-        url: 'google.com'
-    }
-];
-
 //Routes
 app.post('/newurl',urlParser, (req, res, next) => {
-    if(!req.body) return res.sendStatus(400);
+    if(!req.body) return res.redirect('/');
     let originalURL = req.body.url;
-    let slug = slugs.length + 1;
-    let newURL = `https://shortn.io/${slug}`;
-    slugs.push({'slug': slug, 'url': newURL})
-    console.log(originalURL);
-    res.send({originalURL, newURL});
+    console.log((originalURL));
+
+    //Validate URL
+    if(validUrl.isUri(originalURL)){
+        //DB Connection
+        let newShortUrl = new ShortUrl({'url': originalURL});
+        newShortUrl.save(function (err, newShortUrl) {
+            if (err) return console.error(err);
+            console.log(`Saved new URL ${newShortUrl}`);
+            let urlWithId = `https://${siteUrl}/${newShortUrl["_id"]}`
+            res.send({originalURL, urlWithId});
+        });
+    }else{
+        res.redirect('/');
+    }
+
 });
 
 app.get('/:slug', (req, res, next) => {
     //Check slug against DB, redirect to URL from the slug.
-    slugUrl = slugs[req.params.slug].url;
-    res.send(slugUrl); //Should be a redirect
+    ShortUrl.find({_id:req.params.slug}, (err, urls) => {
+        if(err){console.log(err)};
+        forward = urls[0].url;
+        res.send(`<meta http-equiv="refresh" content="0; url=${forward}/" /> <h1>Redirecting...</h1>`)
+    });
+    
 });
+
 
 
 
